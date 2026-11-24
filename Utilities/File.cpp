@@ -1217,7 +1217,7 @@ bool fs::remove_dir(const std::string& path)
 	}
 
 #ifdef _WIN32
-	if (!RemoveDirectoryW(to_wchar(win_strip_trailing_delim(path)).get()))
+	if (!RemoveDirectoryW(to_wchar(std::string(win_strip_trailing_delim(path))).get()))
 	{
 		g_tls_error = to_error(GetLastError());
 		return false;
@@ -1282,8 +1282,8 @@ bool fs::rename(const std::string& from, const std::string& to, bool overwrite)
 	}
 
 #ifdef _WIN32
-	const auto ws1 = to_wchar(win_strip_trailing_delim(from));
-	const auto ws2 = to_wchar(win_strip_trailing_delim(to));
+	const auto ws1 = to_wchar(std::string(win_strip_trailing_delim(from)));
+	const auto ws2 = to_wchar(std::string(win_strip_trailing_delim(to)));
 
 	if (!MoveFileExW(ws1.get(), ws2.get(), overwrite ? MOVEFILE_REPLACE_EXISTING : 0))
 	{
