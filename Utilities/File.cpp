@@ -1188,6 +1188,20 @@ bool fs::create_path(const std::string& path)
 	return true;
 }
 
+#ifdef _WIN32
+// Some Windows 11 systems reject directory renames/removals (ERROR_INVALID_PARAMETER, 87)
+// when the path ends with a separator. Strip trailing separators, but keep drive roots like "C:/".
+static std::string_view win_strip_trailing_delim(std::string_view path)
+{
+	while (path.size() > 3 && (path.back() == '/' || path.back() == '\\'))
+	{
+		path.remove_suffix(1);
+	}
+
+	return path;
+}
+#endif
+
 bool fs::remove_dir(const std::string& path)
 {
 	if (path.empty())
@@ -1203,7 +1217,7 @@ bool fs::remove_dir(const std::string& path)
 	}
 
 #ifdef _WIN32
-	if (!RemoveDirectoryW(to_wchar(path).get()))
+	if (!RemoveDirectoryW(to_wchar(win_strip_trailing_delim(path)).get()))
 	{
 		g_tls_error = to_error(GetLastError());
 		return false;
@@ -1268,8 +1282,8 @@ bool fs::rename(const std::string& from, const std::string& to, bool overwrite)
 	}
 
 #ifdef _WIN32
-	const auto ws1 = to_wchar(from);
-	const auto ws2 = to_wchar(to);
+	const auto ws1 = to_wchar(win_strip_trailing_delim(from));
+	const auto ws2 = to_wchar(win_strip_trailing_delim(to));
 
 	if (!MoveFileExW(ws1.get(), ws2.get(), overwrite ? MOVEFILE_REPLACE_EXISTING : 0))
 	{
